@@ -25,7 +25,8 @@ const swap = async () => {
     tokenAAmount,
     poolInfo,
     100000, // Max amount of lamports
-    useVersionedTransaction
+    useVersionedTransaction,
+    'in'
   )
 
   if (executeSwap) {

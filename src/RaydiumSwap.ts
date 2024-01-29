@@ -61,7 +61,8 @@ class RaydiumSwap {
     amount: number,
     poolKeys: LiquidityPoolKeys,
     maxLamports: number = 100000,
-    useVersionedTransaction = true
+    useVersionedTransaction = true,
+    fixedSide: 'in' | 'out' = 'in'
   ): Promise<Transaction | VersionedTransaction> {
     const directionIn = poolKeys.baseMint.toString() == fromToken
     const { minAmountOut, amountIn } = await this.calcAmountOut(poolKeys, amount, directionIn)
@@ -79,7 +80,7 @@ class RaydiumSwap {
       },
       amountIn: amountIn,
       amountOut: minAmountOut,
-      fixedSide: 'in',
+      fixedSide: fixedSide,
       config: {
         bypassAssociatedCheck: false,
       },
