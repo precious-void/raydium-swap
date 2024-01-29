@@ -9,6 +9,7 @@ import {
   TokenAmount,
   TOKEN_PROGRAM_ID,
   Percent,
+  SPL_ACCOUNT_LAYOUT,
 } from '@raydium-io/raydium-sdk'
 import { Wallet } from '@project-serum/anchor'
 import base58 from 'bs58'
@@ -42,26 +43,38 @@ class RaydiumSwap {
     return jsonInfo2PoolKeys(poolData) as LiquidityPoolKeys
   }
 
+  async getOwnerTokenAccounts() {
+    const walletTokenAccount = await this.connection.getTokenAccountsByOwner(this.wallet.publicKey, {
+      programId: TOKEN_PROGRAM_ID,
+    })
+
+    return walletTokenAccount.value.map((i) => ({
+      pubkey: i.pubkey,
+      programId: i.account.owner,
+      accountInfo: SPL_ACCOUNT_LAYOUT.decode(i.account.data),
+    }))
+  }
+
   async getSwapTransaction(
     fromToken: string,
-    toToken: string,
+    // toToken: string,
     amount: number,
     poolKeys: LiquidityPoolKeys,
-    maxLamports: number = 100000
-  ): Promise<[Transaction, VersionedTransaction]> {
-    const { minAmountOut, amountIn } = await this.calcAmountOut(poolKeys, amount, false)
+    maxLamports: number = 100000,
+    useVersionedTransaction = true
+  ): Promise<Transaction | VersionedTransaction> {
+    const directionIn = poolKeys.baseMint.toString() == fromToken
+    const { minAmountOut, amountIn } = await this.calcAmountOut(poolKeys, amount, directionIn)
 
-    const fromAccount = this.getTokenAccountByOwnerAndMint(new PublicKey(fromToken))
-    const toAccount = this.getTokenAccountByOwnerAndMint(new PublicKey(toToken))
-
+    const userTokenAccounts = await this.getOwnerTokenAccounts()
     const swapTransaction = await Liquidity.makeSwapInstructionSimple({
       connection: this.connection,
-      makeTxVersion: 1,
+      makeTxVersion: useVersionedTransaction ? 0 : 1,
       poolKeys: {
         ...poolKeys,
       },
       userKeys: {
-        tokenAccounts: [fromAccount, toAccount],
+        tokenAccounts: userTokenAccounts,
         owner: this.wallet.publicKey,
       },
       amountIn: amountIn,
@@ -78,6 +91,20 @@ class RaydiumSwap {
     const recentBlockhashForSwap = await this.connection.getLatestBlockhash()
     const instructions = swapTransaction.innerTransactions[0].instructions.filter(Boolean)
 
+    if (useVersionedTransaction) {
+      const versionedTransaction = new VersionedTransaction(
+        new TransactionMessage({
+          payerKey: this.wallet.publicKey,
+          recentBlockhash: recentBlockhashForSwap.blockhash,
+          instructions: instructions,
+        }).compileToV0Message()
+      )
+
+      versionedTransaction.sign([this.wallet.payer])
+
+      return versionedTransaction
+    }
+
     const legacyTransaction = new Transaction({
       blockhash: recentBlockhashForSwap.blockhash,
       lastValidBlockHeight: recentBlockhashForSwap.lastValidBlockHeight,
@@ -86,17 +113,7 @@ class RaydiumSwap {
 
     legacyTransaction.add(...instructions)
 
-    const versionsTransaction = new VersionedTransaction(
-      new TransactionMessage({
-        payerKey: this.wallet.publicKey,
-        recentBlockhash: recentBlockhashForSwap.blockhash,
-        instructions: instructions,
-      }).compileToV0Message()
-    )
-
-    versionsTransaction.sign([this.wallet.payer])
-
-    return [legacyTransaction, versionsTransaction]
+    return legacyTransaction
   }
 
   async sendLegacyTransaction(tx: Transaction) {

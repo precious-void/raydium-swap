@@ -1,4 +1,5 @@
 import RaydiumSwap from './RaydiumSwap'
+import { Transaction, VersionedTransaction } from '@solana/web3.js'
 
 const swap = async () => {
   const executeSwap = false // Change to true to execute swap
@@ -19,24 +20,24 @@ const swap = async () => {
   const poolInfo = raydiumSwap.findPoolInfoForTokens(tokenAAddress, tokenBAddress)
   console.log('Found pool info')
 
-  const [txLegacy, txVersioned] = await raydiumSwap.getSwapTransaction(
+  const tx = await raydiumSwap.getSwapTransaction(
     tokenAAddress,
-    tokenBAddress,
     tokenAAmount,
     poolInfo,
-    100000 // Max amount of lamports
+    100000, // Max amount of lamports
+    useVersionedTransaction
   )
 
   if (executeSwap) {
     const txid = useVersionedTransaction
-      ? await raydiumSwap.sendVersionedTransaction(txVersioned)
-      : await raydiumSwap.sendLegacyTransaction(txLegacy)
+      ? await raydiumSwap.sendVersionedTransaction(tx as VersionedTransaction)
+      : await raydiumSwap.sendLegacyTransaction(tx as Transaction)
 
     console.log(`https://solscan.io/tx/${txid}`)
   } else {
     const simRes = useVersionedTransaction
-      ? await raydiumSwap.simulateVersionedTransaction(txVersioned)
-      : await raydiumSwap.simulateLegacyTransaction(txLegacy)
+      ? await raydiumSwap.simulateVersionedTransaction(tx as VersionedTransaction)
+      : await raydiumSwap.simulateLegacyTransaction(tx as Transaction)
 
     console.log(simRes)
   }
