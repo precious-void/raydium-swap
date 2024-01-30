@@ -64,7 +64,7 @@ class RaydiumSwap {
     useVersionedTransaction = true,
     fixedSide: 'in' | 'out' = 'in'
   ): Promise<Transaction | VersionedTransaction> {
-    const directionIn = poolKeys.baseMint.toString() == fromToken
+    const directionIn = poolKeys.quoteMint.toString() == fromToken
     const { minAmountOut, amountIn } = await this.calcAmountOut(poolKeys, amount, directionIn)
 
     const userTokenAccounts = await this.getOwnerTokenAccounts()
