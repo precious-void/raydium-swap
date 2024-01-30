@@ -56,15 +56,15 @@ class RaydiumSwap {
   }
 
   async getSwapTransaction(
-    fromToken: string,
-    // toToken: string,
+    toToken: string,
+    // fromToken: string,
     amount: number,
     poolKeys: LiquidityPoolKeys,
     maxLamports: number = 100000,
     useVersionedTransaction = true,
     fixedSide: 'in' | 'out' = 'in'
   ): Promise<Transaction | VersionedTransaction> {
-    const directionIn = poolKeys.quoteMint.toString() == fromToken
+    const directionIn = poolKeys.quoteMint.toString() == toToken
     const { minAmountOut, amountIn } = await this.calcAmountOut(poolKeys, amount, directionIn)
 
     const userTokenAccounts = await this.getOwnerTokenAccounts()

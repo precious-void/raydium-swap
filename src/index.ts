@@ -21,7 +21,7 @@ const swap = async () => {
   console.log('Found pool info')
 
   const tx = await raydiumSwap.getSwapTransaction(
-    tokenAAddress,
+    tokenBAddress,
     tokenAAmount,
     poolInfo,
     100000, // Max amount of lamports
