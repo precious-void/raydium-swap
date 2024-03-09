@@ -1,5 +1,5 @@
 import RaydiumSwap from './RaydiumSwap'
-import { Transaction, VersionedTransaction } from '@solana/web3.js'
+import { Transaction, VersionedTransaction, LAMPORTS_PER_SOL } from '@solana/web3.js'
 
 const swap = async () => {
   const executeSwap = false // Change to true to execute swap
@@ -24,7 +24,7 @@ const swap = async () => {
     tokenBAddress,
     tokenAAmount,
     poolInfo,
-    100000, // Max amount of lamports
+    0.0005 * LAMPORTS_PER_SOL, // Prioritization fee, now set to (0.0005 SOL)
     useVersionedTransaction,
     'in'
   )

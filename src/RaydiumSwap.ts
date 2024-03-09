@@ -13,6 +13,8 @@ import {
 } from '@raydium-io/raydium-sdk'
 import { Wallet } from '@project-serum/anchor'
 import base58 from 'bs58'
+import { existsSync } from 'fs'
+import { readFile, writeFile } from 'fs/promises'
 
 class RaydiumSwap {
   allPoolKeysJson: LiquidityPoolJsonInfo[]
@@ -25,12 +27,22 @@ class RaydiumSwap {
   }
 
   async loadPoolKeys() {
-    const liquidityJsonResp = await fetch('https://api.raydium.io/v2/sdk/liquidity/mainnet.json')
-    if (!liquidityJsonResp.ok) return []
-    const liquidityJson = (await liquidityJsonResp.json()) as { official: any; unOfficial: any }
-    const allPoolKeysJson = [...(liquidityJson?.official ?? []), ...(liquidityJson?.unOfficial ?? [])]
+    try {
+      if (existsSync('pools.json')) {
+        this.allPoolKeysJson = JSON.parse((await readFile('pools.json')).toString())
+        return
+      }
 
-    this.allPoolKeysJson = allPoolKeysJson
+      throw new Error('no file found')
+    } catch (error) {
+      const liquidityJsonResp = await fetch('https://api.raydium.io/v2/sdk/liquidity/mainnet.json')
+      if (!liquidityJsonResp.ok) return []
+      const liquidityJson = (await liquidityJsonResp.json()) as { official: any; unOfficial: any }
+      const allPoolKeysJson = [...(liquidityJson?.official ?? []), ...(liquidityJson?.unOfficial ?? [])]
+
+      this.allPoolKeysJson = allPoolKeysJson
+      await writeFile('pools.json', JSON.stringify(allPoolKeysJson))
+    }
   }
 
   findPoolInfoForTokens(mintA: string, mintB: string) {
