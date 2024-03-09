@@ -120,7 +120,6 @@ class RaydiumSwap {
   async sendLegacyTransaction(tx: Transaction) {
     const txid = await this.connection.sendTransaction(tx, [this.wallet.payer], {
       skipPreflight: true,
-      maxRetries: 2,
     })
 
     return txid
@@ -129,7 +128,6 @@ class RaydiumSwap {
   async sendVersionedTransaction(tx: VersionedTransaction) {
     const txid = await this.connection.sendTransaction(tx, {
       skipPreflight: true,
-      maxRetries: 2,
     })
 
     return txid
