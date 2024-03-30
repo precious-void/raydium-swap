@@ -26,7 +26,8 @@ const swap = async () => {
     poolInfo,
     0.0005 * LAMPORTS_PER_SOL, // Prioritization fee, now set to (0.0005 SOL)
     useVersionedTransaction,
-    'in'
+    'in',
+    5 // Slippage
   )
 
   if (executeSwap) {
