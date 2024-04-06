@@ -18,9 +18,14 @@ const swap = async () => {
 
   // Trying to find pool info in the json we loaded earlier and by comparing baseMint and tokenBAddress
   let poolInfo = raydiumSwap.findPoolInfoForTokens(baseMint, quoteMint)
-  console.log('Found pool info')
 
   if (!poolInfo) poolInfo = await raydiumSwap.findRaydiumPoolInfo(baseMint, quoteMint)
+
+  if (!poolInfo) {
+    throw new Error("Couldn't find the pool info")
+  }
+
+  console.log('Found pool info', poolInfo)
 
   const tx = await raydiumSwap.getSwapTransaction(
     quoteMint,

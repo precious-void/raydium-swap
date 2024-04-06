@@ -280,7 +280,7 @@ class RaydiumSwap {
     }
 
     const currencyIn = new Token(TOKEN_PROGRAM_ID, currencyInMint, currencyInDecimals)
-    const amountIn = new TokenAmount(currencyIn, rawAmountIn, false)
+    const amountIn = new TokenAmount(currencyIn, rawAmountIn.toFixed(currencyInDecimals), false)
     const currencyOut = new Token(TOKEN_PROGRAM_ID, currencyOutMint, currencyOutDecimals)
     const slippageX = new Percent(slippage, 100) // 5% slippage
 
