@@ -85,26 +85,19 @@ class RaydiumSwap {
             },
           ],
         })
-        .then((r) => {
-          if (r.length > 0) {
-            resolve(r);
-          }else{
-            setTimeout(() => {
-              resolve([])
-            }, 3000);
-          }
-        });
+        .then((r) => resolve(r));
     });
   }
 
   async getProgramAccounts(baseMint: string, quoteMint: string) {
-    let response = await Promise.race<
+    let response = await Promise.all<
       [Promise<GetProgramAccountsResponse>, Promise<GetProgramAccountsResponse>]
     >([
       this._getProgramAccounts(baseMint, quoteMint),
       this._getProgramAccounts(quoteMint, baseMint),
-    ]);
-    return response;
+    ])
+
+    return response.filter((r)=>r.length > 0)[0] || []
   }
 
   async findRaydiumPoolInfo(baseMint: string, quoteMint: string): Promise<LiquidityPoolKeys | undefined> {
