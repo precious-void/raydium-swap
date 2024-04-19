@@ -1,4 +1,12 @@
-import { Connection, PublicKey, Keypair, Transaction, VersionedTransaction, TransactionMessage } from '@solana/web3.js'
+import {
+  Connection,
+  PublicKey,
+  Keypair,
+  Transaction,
+  VersionedTransaction,
+  TransactionMessage,
+  GetProgramAccountsResponse,
+} from '@solana/web3.js'
 import {
   Liquidity,
   LiquidityPoolKeys,
@@ -60,7 +68,7 @@ class RaydiumSwap {
     return jsonInfo2PoolKeys(poolData) as LiquidityPoolKeys
   }
 
-  async getProgramAccounts(baseMint: string, quoteMint: string) {
+  private async _getProgramAccounts(baseMint: string, quoteMint: string): Promise<GetProgramAccountsResponse> {
     const layout = LIQUIDITY_STATE_LAYOUT_V4
 
     return this.connection.getProgramAccounts(new PublicKey(RaydiumSwap.RAYDIUM_V4_PROGRAM_ID), {
@@ -80,6 +88,15 @@ class RaydiumSwap {
         },
       ],
     })
+  }
+
+  async getProgramAccounts(baseMint: string, quoteMint: string) {
+    const response = await Promise.all([
+      this._getProgramAccounts(baseMint, quoteMint),
+      this._getProgramAccounts(quoteMint, baseMint),
+    ])
+
+    return response.filter((r) => r.length > 0)[0] || []
   }
 
   async findRaydiumPoolInfo(baseMint: string, quoteMint: string): Promise<LiquidityPoolKeys | undefined> {
