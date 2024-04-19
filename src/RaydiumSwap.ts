@@ -1,4 +1,12 @@
-import { Connection, PublicKey, Keypair, Transaction, VersionedTransaction, TransactionMessage, GetProgramAccountsResponse } from '@solana/web3.js'
+import {
+  Connection,
+  PublicKey,
+  Keypair,
+  Transaction,
+  VersionedTransaction,
+  TransactionMessage,
+  GetProgramAccountsResponse,
+} from '@solana/web3.js'
 import {
   Liquidity,
   LiquidityPoolKeys,
@@ -13,7 +21,6 @@ import {
   LIQUIDITY_STATE_LAYOUT_V4,
   MARKET_STATE_LAYOUT_V3,
   Market,
-
 } from '@raydium-io/raydium-sdk'
 import { Wallet } from '@project-serum/anchor'
 import base58 from 'bs58'
@@ -61,43 +68,35 @@ class RaydiumSwap {
     return jsonInfo2PoolKeys(poolData) as LiquidityPoolKeys
   }
 
-  private async _getProgramAccounts(
-    mint1: string,
-    mint2: string
-  ): Promise<GetProgramAccountsResponse> {
-    const layout = LIQUIDITY_STATE_LAYOUT_V4;
-    return new Promise((resolve) => {
-      this.connection
-        .getProgramAccounts(new PublicKey(RaydiumSwap.RAYDIUM_V4_PROGRAM_ID), {
-          filters: [
-            { dataSize: layout.span },
-            {
-              memcmp: {
-                offset: layout.offsetOf("baseMint"),
-                bytes: new PublicKey(mint1).toBase58(),
-              },
-            },
-            {
-              memcmp: {
-                offset: layout.offsetOf("quoteMint"),
-                bytes: new PublicKey(mint2).toBase58(),
-              },
-            },
-          ],
-        })
-        .then((r) => resolve(r));
-    });
+  private async _getProgramAccounts(baseMint: string, quoteMint: string): Promise<GetProgramAccountsResponse> {
+    const layout = LIQUIDITY_STATE_LAYOUT_V4
+
+    return this.connection.getProgramAccounts(new PublicKey(RaydiumSwap.RAYDIUM_V4_PROGRAM_ID), {
+      filters: [
+        { dataSize: layout.span },
+        {
+          memcmp: {
+            offset: layout.offsetOf('baseMint'),
+            bytes: new PublicKey(baseMint).toBase58(),
+          },
+        },
+        {
+          memcmp: {
+            offset: layout.offsetOf('quoteMint'),
+            bytes: new PublicKey(quoteMint).toBase58(),
+          },
+        },
+      ],
+    })
   }
 
   async getProgramAccounts(baseMint: string, quoteMint: string) {
-    let response = await Promise.all<
-      [Promise<GetProgramAccountsResponse>, Promise<GetProgramAccountsResponse>]
-    >([
+    const response = await Promise.all([
       this._getProgramAccounts(baseMint, quoteMint),
       this._getProgramAccounts(quoteMint, baseMint),
     ])
 
-    return response.filter((r)=>r.length > 0)[0] || []
+    return response.filter((r) => r.length > 0)[0] || []
   }
 
   async findRaydiumPoolInfo(baseMint: string, quoteMint: string): Promise<LiquidityPoolKeys | undefined> {
